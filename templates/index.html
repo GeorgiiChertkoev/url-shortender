@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>URL Shortener</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 50px; }
+        input { padding: 10px; width: 300px; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>Сократить ссылку</h1>
+    <form method="POST" action="/shorten">
+        <input type="url" name="url" placeholder="https://example.com" required>
+        <button type="submit">Сократить</button>
+    </form>
+</body>
+</html>

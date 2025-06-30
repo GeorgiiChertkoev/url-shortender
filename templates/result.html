@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ваша короткая ссылка</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 50px; }
+        a { color: #0066cc; }
+    </style>
+</head>
+<body>
+    <h1>Готово!</h1>
+    <p>Исходная ссылка: {{ .OriginalURL }}</p>
+    <p>Короткая ссылка: <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a></p>
+    <a href="/">Создать ещё</a>
+</body>
+</html>

@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/jcoene/go-base62"
@@ -16,9 +16,10 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/shorten/{long_link}", ShortenLink)
+	r.HandleFunc("/shorten", ShortenLink)
 	r.HandleFunc("/favicon.ico", GetIcon)
 	r.HandleFunc("/{short_link}", Transfer)
+	r.HandleFunc("/", IndexPage)
 	http.Handle("/", r)
 	log.Println("Сервер запущен на :9090")
 	http.ListenAndServe(":9090", nil)
@@ -26,17 +27,47 @@ func main() {
 
 func GetIcon(w http.ResponseWriter, r *http.Request) {}
 
-func ShortenLink(w http.ResponseWriter, r *http.Request) {
-	var long_link = mux.Vars(r)["long_link"]
-	log.Printf("Ссылка для сокращения %s", long_link)
+func IndexPage(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("templates/index.html")
+	if err != nil {
+		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, nil)
+}
 
-	if !strings.HasPrefix(long_link, "http://") && !strings.HasPrefix(long_link, "https://") {
-		long_link = "http://" + long_link
+func ShortenLink(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		return
 	}
 
-	m[base62.Encode(int64(len(m)))] = long_link
-	fmt.Fprintf(w, "Long link is %v\n", long_link)
-	fmt.Fprintf(w, "Current map is %v\n", m)
+	originalURL := r.FormValue("url")
+	if originalURL == "" {
+		http.Error(w, "URL не может быть пустым", http.StatusBadRequest)
+		return
+	}
+
+	shortCode := base62.Encode(int64(len(m)))
+	log.Printf("Ссылка для сокращения %s", originalURL)
+
+	m[shortCode] = originalURL
+
+	data := struct {
+		OriginalURL string
+		ShortURL    string
+	}{
+		OriginalURL: originalURL,
+		ShortURL:    fmt.Sprintf("http://%s/%s", r.Host, shortCode),
+	}
+
+	tmpl, err := template.ParseFiles("templates/result.html")
+	if err != nil {
+		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, data)
+
 }
 
 func Transfer(w http.ResponseWriter, r *http.Request) {
